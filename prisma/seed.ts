@@ -17,20 +17,8 @@
 
 import { PrismaClient } from '@prisma/client'
 
-const dbUrl = process.env.DATABASE_URL || ''
-let prisma: PrismaClient
+const prisma = new PrismaClient()
 
-if (dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://')) {
-  const { Pool } = require('pg')
-  const { PrismaPg } = require('@prisma/adapter-pg')
-  const pool = new Pool({ connectionString: dbUrl })
-  const adapter = new PrismaPg(pool)
-  prisma = new PrismaClient({ adapter })
-} else {
-  const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3')
-  const adapter = new PrismaBetterSqlite3({ url: dbUrl || 'file:./dev.db' })
-  prisma = new PrismaClient({ adapter })
-}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
