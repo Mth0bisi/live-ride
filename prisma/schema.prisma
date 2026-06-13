@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Event {
+  id        String   @id @default(uuid())
+  name      String
+  eventDate DateTime
+  venue     String
+  qualifier String
+  status    String   @default("ACTIVE")
+  arenas    Arena[]
+  classes   CompetitionClass[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Arena {
+  id         String   @id @default(uuid())
+  eventId    String
+  name       String
+  discipline String
+  status     String   @default("ACTIVE") // ACTIVE, PAUSED, ARENA_RAKE, COURSE_CHANGE, COMPLETE
+  event      Event    @relation(fields: [eventId], references: [id])
+  classes    CompetitionClass[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model CompetitionClass {
+  id                 String   @id @default(uuid())
+  eventId            String
+  arenaId            String
+  classCode          String
+  name               String
+  discipline         String   @default("SHOWJUMPING")
+  height             String
+  competitionType    String
+  feiArticle         String?
+  scheduledStartTime String // "08:15"
+  expectedRiders     Int      @default(0)
+  sortOrder          Int
+  status             String   @default("PENDING")
+  event              Event    @relation(fields: [eventId], references: [id])
+  arena              Arena    @relation(fields: [arenaId], references: [id])
+  runningOrders      RunningOrder[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model School {
+  id        String   @id @default(uuid())
+  name      String
+  riders    Rider[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Rider {
+  id            String   @id @default(uuid())
+  riderNo       String
+  fullName      String
+  schoolId      String
+  school        School   @relation(fields: [schoolId], references: [id])
+  runningOrders RunningOrder[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Horse {
+  id            String   @id @default(uuid())
+  name          String
+  type          String
+  runningOrders RunningOrder[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model RunningOrder {
+  id                String   @id @default(uuid())
+  classId           String
+  riderId           String
+  horseId           String
+  plannedOrderNo    Int
+  actualOrderNo     Int?
+  plannedTime       String?
+  status            String   @default("SCHEDULED") // SCHEDULED, CHECKED_IN, AT_GATE, IN_ARENA, FINISHED, RESULT_PENDING, RESULT_CONFIRMED, PUBLISHED, HELD, SCRATCHED, NO_SHOW, ELIMINATED, RETIRED
+  orderChanged      Boolean  @default(false)
+  orderChangeReason String?
+  checkedInAt       DateTime?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  
+  competitionClass  CompetitionClass @relation(fields: [classId], references: [id])
+  rider             Rider            @relation(fields: [riderId], references: [id])
+  horse             Horse            @relation(fields: [horseId], references: [id])
+  result            Result?
+  statusHistory     StatusHistory[]
+  timerEvents       TimerEvent[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Result {
+  id               String   @id @default(uuid())
+  runningOrderId   String   @unique
+  elapsedSeconds   Float?
+  faults           Int?
+  penalties        Int?
+  placing          Int?
+  resultStatus     String   @default("PENDING") // PENDING, CONFIRMED, DISPUTED
+  published        Boolean  @default(false)
+  runningOrder     RunningOrder @relation(fields: [runningOrderId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model StatusHistory {
+  id             String   @id @default(uuid())
+  runningOrderId String
+  oldStatus      String?
+  newStatus      String
+  reason         String?
+  changedBy      String?
+  changedAt      DateTime @default(now())
+  runningOrder   RunningOrder @relation(fields: [runningOrderId], references: [id])
+}
+
+model TimerEvent {
+  id             String   @id @default(uuid())
+  runningOrderId String
+  eventType      String
+  eventTime      DateTime @default(now())
+  source         String?
+  capturedBy     String?
+  runningOrder   RunningOrder @relation(fields: [runningOrderId], references: [id])
+}
