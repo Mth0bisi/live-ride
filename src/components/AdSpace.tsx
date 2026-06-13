@@ -102,7 +102,7 @@ export default function AdSpace({
         href={finalHref}
         target="_blank"
         rel="noopener noreferrer sponsored"
-        className="block w-full h-full transition-opacity duration-200 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+        className="relative block w-full h-full transition-opacity duration-200 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
         aria-label={`Advertisement: ${ad.alt}`}
         id={`ad-${sponsor}-${size}`}
       >

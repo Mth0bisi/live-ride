@@ -16,10 +16,21 @@
  */
 
 import { PrismaClient } from '@prisma/client'
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
 
-const adapter = new PrismaBetterSqlite3({ url: 'file:./dev.db' })
-const prisma = new PrismaClient({ adapter })
+const dbUrl = process.env.DATABASE_URL || ''
+let prisma: PrismaClient
+
+if (dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://')) {
+  const { Pool } = require('pg')
+  const { PrismaPg } = require('@prisma/adapter-pg')
+  const pool = new Pool({ connectionString: dbUrl })
+  const adapter = new PrismaPg(pool)
+  prisma = new PrismaClient({ adapter })
+} else {
+  const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3')
+  const adapter = new PrismaBetterSqlite3({ url: dbUrl || 'file:./dev.db' })
+  prisma = new PrismaClient({ adapter })
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -150,6 +161,18 @@ async function createEntry(opts: {
 
 async function main() {
   console.log('🌱  Seeding LiveRide demo data…')
+
+  console.log('   Cleaning up old database records…')
+  await prisma.timerEvent.deleteMany()
+  await prisma.statusHistory.deleteMany()
+  await prisma.result.deleteMany()
+  await prisma.runningOrder.deleteMany()
+  await prisma.competitionClass.deleteMany()
+  await prisma.arena.deleteMany()
+  await prisma.event.deleteMany()
+  await prisma.rider.deleteMany()
+  await prisma.horse.deleteMany()
+  await prisma.school.deleteMany()
 
   // ── 1. Schools ──────────────────────────────────────────────────────────────
   console.log('   Creating schools…')
