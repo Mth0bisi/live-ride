@@ -1,93 +1,96 @@
-import Image from 'next/image';
-
 /**
- * AdSpace component — displays a sponsor advertisement banner.
- * Toyota has been removed. Western Shoppe is now the primary platform sponsor.
+ * AdSpace — sponsor advertisement banner component.
+ *
+ * Sponsor: Western Shoppe (Traders in Fine Saddlery and Equestrian Supplies)
+ *
+ * Placement types:
+ *   'banner'  → top & bottom leaderboard areas — uses western-shoppe-banner.png
+ *   'square'  → right sidebar compact slot    — uses western-shoppe-square.png
+ *   'legacy'  → legacy leaderboard slot       — falls back to banner image
  */
 
-type Sponsor = 'western-shoppe';
-type AdSize = 'leaderboard' | 'sidebar' | 'banner';
+type AdPlacement = 'banner' | 'square' | 'legacy';
 
 interface AdSpaceProps {
-  sponsor?: Sponsor;
-  size: AdSize;
+  /** Which slot this ad fills. Defaults to 'banner'. */
+  placement?: AdPlacement;
+  /** Override the destination URL */
   href?: string;
   className?: string;
+  /**
+   * @deprecated Use placement instead.
+   * Legacy prop kept for backwards-compat — 'leaderboard'/'sidebar'/'banner'
+   * are mapped to the new placement values automatically.
+   */
+  size?: 'leaderboard' | 'sidebar' | 'banner';
+  /** @deprecated Single sponsor — this prop is ignored but kept for compat. */
+  sponsor?: string;
 }
 
-const AD_CONFIG: Record<
-  Sponsor,
-  { href: string; alt: string; label: string }
-> = {
-  'western-shoppe': {
-    href: 'https://www.westernshoppe.co.za',
-    alt: 'Western Shoppe – Gear Up. Ride On. Premium Equestrian Clothing & Gear',
-    label: 'Western Shoppe',
-  },
-};
+const WS_HREF = 'https://www.westernshoppe.co.za';
+const WS_ALT  = 'Western Shoppe – Traders in Fine Saddlery and Equestrian Supplies';
 
-/** Pixel height for each ad slot */
-const SIZE_HEIGHT: Record<AdSize, number> = {
-  leaderboard: 350,
-  sidebar:     260,
-  banner:       80,
-};
+/** Resolve the correct image path and dimensions for each placement. */
+function getConfig(placement: AdPlacement) {
+  switch (placement) {
+    case 'square':
+      return {
+        src:             '/sponsors/western-shoppe-square.png',
+        containerStyle:  { width: '100%', maxWidth: '300px', aspectRatio: '1 / 1' },
+        imgStyle:        { width: '100%', height: '100%', objectFit: 'contain' as const },
+        containerClass:  'overflow-hidden rounded-xl border border-slate-200/60 shadow-md',
+      };
+    case 'banner':
+    case 'legacy':
+    default:
+      return {
+        src:            '/sponsors/western-shoppe-banner.png',
+        containerStyle: { width: '100%', maxHeight: '90px' },
+        imgStyle:       { width: '100%', height: '90px', objectFit: 'contain' as const },
+        containerClass: 'w-full overflow-hidden rounded-xl border border-slate-100 shadow-sm bg-white',
+      };
+  }
+}
 
-const SIZE_CONFIG: Record<
-  AdSize,
-  { containerClass: string; imgSrc: Record<Sponsor, string> }
-> = {
-  leaderboard: {
-    containerClass: 'w-full overflow-hidden rounded-xl border border-slate-200/60 shadow-sm',
-    imgSrc: {
-      'western-shoppe': '/ad-western-shoppe-sidebar.png',
-    },
-  },
-  sidebar: {
-    containerClass: 'w-full max-w-[300px] overflow-hidden rounded-xl border border-slate-200/60 shadow-md',
-    imgSrc: {
-      'western-shoppe': '/ad-western-shoppe-sidebar.png',
-    },
-  },
-  banner: {
-    containerClass: 'w-full overflow-hidden rounded-lg border border-slate-200/60 shadow-sm',
-    imgSrc: {
-      'western-shoppe': '/ad-western-shoppe-sidebar.png',
-    },
-  },
-};
+/** Map the legacy `size` prop to the new placement system. */
+function resolvePlacement(
+  placement: AdPlacement | undefined,
+  size: AdSpaceProps['size'] | undefined,
+): AdPlacement {
+  if (placement) return placement;
+  if (size === 'sidebar') return 'square';
+  return 'banner';
+}
 
 export default function AdSpace({
-  sponsor = 'western-shoppe',
+  placement,
   size,
   href,
   className = '',
 }: AdSpaceProps) {
-  const ad       = AD_CONFIG[sponsor];
-  const sizeConf = SIZE_CONFIG[size];
-  const height   = SIZE_HEIGHT[size];
-  const finalHref = href ?? ad.href;
-  const imgSrc   = sizeConf.imgSrc[sponsor];
+  const resolved = resolvePlacement(placement, size);
+  const cfg      = getConfig(resolved);
+  const finalHref = href ?? WS_HREF;
 
   return (
     <div
-      className={`ad-space-wrapper group relative ${sizeConf.containerClass} ${className}`}
-      style={{ height: `${height}px` }}
+      className={`ad-space-wrapper group relative ${cfg.containerClass} ${className}`}
+      style={cfg.containerStyle}
       role="complementary"
-      aria-label={`Sponsored by ${ad.label}`}
+      aria-label="Sponsored by Western Shoppe"
     >
-      {/* Sponsored label */}
-      <div className="absolute top-1.5 left-2 z-10 pointer-events-none">
+      {/* Sponsored micro-label */}
+      <div className="absolute top-1 left-2 z-10 pointer-events-none">
         <span
           style={{
             fontSize: '9px',
             fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
-            background: 'rgba(0,0,0,0.45)',
-            color: 'rgba(255,255,255,0.75)',
-            padding: '2px 6px',
-            borderRadius: '4px',
+            background: 'rgba(0,0,0,0.35)',
+            color: 'rgba(255,255,255,0.80)',
+            padding: '1px 5px',
+            borderRadius: '3px',
             backdropFilter: 'blur(4px)',
           }}
         >
@@ -99,17 +102,16 @@ export default function AdSpace({
         href={finalHref}
         target="_blank"
         rel="noopener noreferrer sponsored"
-        className="relative block w-full h-full transition-opacity duration-200 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-        aria-label={`Advertisement: ${ad.alt}`}
-        id={`ad-${sponsor}-${size}`}
+        className="block w-full h-full transition-opacity duration-200 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+        aria-label={`Advertisement: ${WS_ALT}`}
+        id={`ad-western-shoppe-${resolved}`}
       >
-        <Image
-          src={imgSrc}
-          alt={ad.alt}
-          fill
-          className="object-cover object-center"
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={cfg.src}
+          alt={WS_ALT}
+          style={cfg.imgStyle}
           loading="lazy"
-          unoptimized
         />
       </a>
     </div>

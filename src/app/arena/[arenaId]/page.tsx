@@ -315,8 +315,8 @@ export default function PublicArenaView() {
             </div>
           </div>
 
-          {/* Western Shoppe Sidebar Ad */}
-          <AdSpace sponsor="western-shoppe" size="sidebar" />
+          {/* Western Shoppe Square Sidebar Ad */}
+          <AdSpace placement="square" />
         </div>
       </div>
     </div>

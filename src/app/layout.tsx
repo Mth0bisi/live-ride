@@ -34,7 +34,11 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col" style={{ background: "var(--background)", color: "var(--foreground)", fontFamily: "var(--font-sans)" }}>
 
-        {/* ── Navigation Header ─────────────────────────────────────────── */}
+        {/* ── Navigation Header ─────────────────────────────────────────────
+            Public nav only shows Events, Login, and Sign Up.
+            Admin / Gate / Timer / Judge links are accessed directly by URL.
+            Staff access their pages at /admin, /gate, /timer, /judge.
+        */}
         <header
           className="bg-slate-900 text-white sticky top-0 z-50 nav-gradient-border"
           style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.4)" }}
@@ -58,22 +62,15 @@ export default function RootLayout({
               </span>
             </Link>
 
-            {/* Nav links */}
+            {/* Public nav — Events + Auth only */}
             <nav className="flex items-center gap-1" role="navigation" aria-label="Main navigation">
-              {[
-                { href: "/", label: "Events" },
-                { href: "/admin", label: "Admin" },
-                { href: "/gate", label: "Gate" },
-                { href: "/timer", label: "Timer" },
-              ].map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className="px-3 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all duration-150"
-                >
-                  {label}
-                </Link>
-              ))}
+              <Link
+                href="/"
+                id="nav-events"
+                className="px-3 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all duration-150"
+              >
+                Events
+              </Link>
 
               {/* Auth links */}
               <div className="ml-2 flex items-center gap-1.5 border-l border-slate-700 pl-3">
@@ -97,17 +94,17 @@ export default function RootLayout({
           </div>
         </header>
 
-        {/* ── Main Content ──────────────────────────────────────────────── */}
+        {/* ── Main Content ────────────────────────────────────────────────── */}
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {children}
         </main>
 
-        {/* ── Footer ───────────────────────────────────────────────────── */}
+        {/* ── Footer ─────────────────────────────────────────────────────── */}
         <footer className="bg-slate-900 text-slate-400 mt-12">
 
-          {/* Western Shoppe leaderboard footer ad */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-            <AdSpace sponsor="western-shoppe" size="leaderboard" />
+          {/* Western Shoppe bottom banner ad */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+            <AdSpace placement="banner" />
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -126,15 +123,23 @@ export default function RootLayout({
               </div>
             </div>
 
-            {/* Nav */}
+            {/* Public footer nav — no internal staff links */}
             <nav className="flex flex-wrap gap-4 text-xs font-semibold" aria-label="Footer navigation">
               <Link href="/" className="hover:text-white transition-colors">Events</Link>
-              <Link href="/admin" className="hover:text-white transition-colors">Admin</Link>
-              <Link href="/gate" className="hover:text-white transition-colors">Gate Marshal</Link>
-              <Link href="/timer" className="hover:text-white transition-colors">Timer</Link>
               <Link href="/login" className="hover:text-white transition-colors">Login</Link>
               <Link href="/signup" className="hover:text-white transition-colors">Sign up</Link>
+              <Link href="/unauthorized" className="hover:text-white transition-colors text-slate-600">Access Help</Link>
             </nav>
+
+            {/* Sponsor credit */}
+            <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/sponsors/western-shoppe-banner.png"
+                alt="Western Shoppe"
+                className="h-6 object-contain opacity-60"
+              />
+            </div>
 
             {/* Copyright */}
             <p className="text-xs text-slate-600">

@@ -176,7 +176,7 @@ export default function GateMarshalDashboard() {
         </div>
 
         {/* ── Western Shoppe Banner Ad ────────────────────────────────── */}
-        <AdSpace sponsor="western-shoppe" size="leaderboard" />
+        <AdSpace placement="banner" />
 
         {/* ── Error banner ───────────────────────────────────────────── */}
         {error && (

@@ -253,3 +253,38 @@ model TimerEvent {
   @@index([runningOrderId])
   @@index([eventType])
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User — platform accounts with role-based access
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id   String @id @default(cuid())
+  email String @unique
+  name  String
+
+  /// Bcrypt hash of the password. Null for OAuth/SSO accounts (future).
+  passwordHash String?
+
+  /// VIEWER | GATE_MARSHAL | TIMER | JUDGE | ADMIN | ORGANISER
+  role String @default("VIEWER")
+
+  /// ONE_DAY | STANDARD | PREMIUM | FAMILY — applies to VIEWER role only
+  viewerPackage String?
+
+  /// Number of concurrent logged-in devices allowed (1 for standard, 2 for premium, 4 for family)
+  deviceLimit Int @default(1)
+
+  /// INACTIVE | ACTIVE | EXPIRED | CANCELLED
+  subscriptionStatus String @default("INACTIVE")
+
+  /// UTC timestamp when the subscription ends; null for one-day or lifetime
+  subscriptionEndsAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([subscriptionStatus])
+}
+
