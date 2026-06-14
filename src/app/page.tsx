@@ -2,6 +2,7 @@ import { getAllEventsPublic } from '@/lib/queries';
 import type { EventSummary } from '@/lib/queries';
 import Link from 'next/link';
 import AdSpace from '@/components/AdSpace';
+import { cookies } from 'next/headers';
 
 export const revalidate = 0; // Dynamic — prevents local prerender DB errors; ISR configured via cache layer
 
@@ -41,12 +42,11 @@ function CalendarIcon() {
 
 // ─── Auth-gated event link: redirects unauthenticated users to /login ─────────
 
-function LiveEventCTA({ eventId }: { eventId: string }) {
-  // TODO: Replace with real session check once auth is wired.
-  // Currently routes ALL users through /login first (public landing page assumption).
+function LiveEventCTA({ eventId, isLoggedIn }: { eventId: string; isLoggedIn: boolean }) {
+  const href = isLoggedIn ? `/event/${eventId}` : `/login?return=/event/${eventId}`;
   return (
     <Link
-      href={`/login?return=/event/${eventId}`}
+      href={href}
       id={`live-event-view-${eventId}`}
       className="flex-1 text-center py-2.5 bg-blue-600 hover:bg-blue-700 font-bold text-xs rounded-xl shadow-sm transition-colors duration-150 uppercase tracking-wider text-white"
     >
@@ -59,9 +59,10 @@ function LiveEventCTA({ eventId }: { eventId: string }) {
 
 type CardVariant = 'live' | 'upcoming' | 'completed';
 
-function EventCard({ event, variant }: { event: EventSummary; variant: CardVariant }) {
+function EventCard({ event, variant, isLoggedIn }: { event: EventSummary; variant: CardVariant; isLoggedIn: boolean }) {
   const isLive      = variant === 'live';
   const isCompleted = variant === 'completed';
+  const href = isLoggedIn ? `/event/${event.id}` : `/login?return=/event/${event.id}`;
 
   return (
     <div
@@ -115,11 +116,11 @@ function EventCard({ event, variant }: { event: EventSummary; variant: CardVaria
 
       {/* CTA footer */}
       <div className="p-4 bg-slate-50 border-t border-slate-100">
-        {isLive && <LiveEventCTA eventId={event.id} />}
+        {isLive && <LiveEventCTA eventId={event.id} isLoggedIn={isLoggedIn} />}
 
         {!isLive && !isCompleted && (
           <Link
-            href={`/login?return=/event/${event.id}`}
+            href={href}
             id={`upcoming-event-${event.id}`}
             className="block text-center py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-sm transition-colors uppercase tracking-wider"
           >
@@ -129,7 +130,7 @@ function EventCard({ event, variant }: { event: EventSummary; variant: CardVaria
 
         {isCompleted && (
           <Link
-            href={`/login?return=/event/${event.id}`}
+            href={href}
             id={`archived-event-${event.id}`}
             className="block text-center py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl shadow-sm transition-colors uppercase tracking-wider"
           >
@@ -146,6 +147,9 @@ function EventCard({ event, variant }: { event: EventSummary; variant: CardVaria
 export default async function Home() {
   // Use optimised query helper — reads from cache or falls back to DB
   const events = await getAllEventsPublic();
+
+  const cookieStore = await cookies();
+  const isLoggedIn = !!cookieStore.get('lr_uid')?.value;
 
   const liveEvents      = events.filter(e => e.status === 'ACTIVE');
   const upcomingEvents  = events.filter(e => e.status === 'UPCOMING');
@@ -191,50 +195,52 @@ export default async function Home() {
       {/* ── Western Shoppe Top Banner Ad ────────────────────────────────────── */}
       <AdSpace placement="banner" />
 
-      {/* ── Auth CTA Banner ──────────────────────────────────────────────────── */}
-      <div
-        className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 rounded-2xl border"
-        style={{
-          background:   'linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 100%)',
-          borderColor:  '#bfdbfe',
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)' }}
-          >
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.82V15a1 1 0 01-.553.894L15 13.5M3 8.82a1 1 0 01.553-.894L9 5.5M3 8.82V15a1 1 0 00.553.894L9 18.5m0-13l6 3m-6 3l6 3m-6 0V21" />
-            </svg>
+      {/* ── Auth CTA Banner (Hidden if Logged In) ─────────────────────────────── */}
+      {!isLoggedIn && (
+        <div
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 rounded-2xl border"
+          style={{
+            background:   'linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 100%)',
+            borderColor:  '#bfdbfe',
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)' }}
+            >
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.82V15a1 1 0 01-.553.894L15 13.5M3 8.82a1 1 0 01.553-.894L9 5.5M3 8.82V15a1 1 0 00.553.894L9 18.5m0-13l6 3m-6 3l6 3m-6 0V21" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-slate-900 font-bold text-sm">
+                Login or sign up to view live event updates.
+              </p>
+              <p className="text-slate-500 text-xs font-medium mt-0.5">
+                Real-time arena feeds, running orders, and live results — all in one place.
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-slate-900 font-bold text-sm">
-              Login or sign up to view live event updates.
-            </p>
-            <p className="text-slate-500 text-xs font-medium mt-0.5">
-              Real-time arena feeds, running orders, and live results — all in one place.
-            </p>
+          <div className="flex gap-2.5 shrink-0">
+            <Link
+              href="/login"
+              id="home-cta-login"
+              className="px-5 py-2.5 rounded-xl font-bold text-sm text-blue-700 bg-white border border-blue-200 hover:bg-blue-50 transition-colors"
+            >
+              Login
+            </Link>
+            <Link
+              href="/signup"
+              id="home-cta-signup"
+              className="px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-colors"
+              style={{ background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)' }}
+            >
+              Sign Up
+            </Link>
           </div>
         </div>
-        <div className="flex gap-2.5 shrink-0">
-          <Link
-            href="/login"
-            id="home-cta-login"
-            className="px-5 py-2.5 rounded-xl font-bold text-sm text-blue-700 bg-white border border-blue-200 hover:bg-blue-50 transition-colors"
-          >
-            Login
-          </Link>
-          <Link
-            href="/signup"
-            id="home-cta-signup"
-            className="px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-colors"
-            style={{ background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)' }}
-          >
-            Sign Up
-          </Link>
-        </div>
-      </div>
+      )}
 
       {/* ── Live Events ────────────────────────────────────────────────────── */}
       <section className="space-y-5" aria-label="Live and active shows">
@@ -251,7 +257,7 @@ export default async function Home() {
         {liveEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 card-grid">
             {liveEvents.map(event => (
-              <EventCard key={event.id} event={event} variant="live" />
+              <EventCard key={event.id} event={event} variant="live" isLoggedIn={isLoggedIn} />
             ))}
           </div>
         ) : (
@@ -273,7 +279,7 @@ export default async function Home() {
         {upcomingEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 card-grid">
             {upcomingEvents.map(event => (
-              <EventCard key={event.id} event={event} variant="upcoming" />
+              <EventCard key={event.id} event={event} variant="upcoming" isLoggedIn={isLoggedIn} />
             ))}
           </div>
         ) : (
@@ -294,7 +300,7 @@ export default async function Home() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 card-grid">
             {completedEvents.map(event => (
-              <EventCard key={event.id} event={event} variant="completed" />
+              <EventCard key={event.id} event={event} variant="completed" isLoggedIn={isLoggedIn} />
             ))}
           </div>
         </section>

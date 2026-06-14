@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import AdSpace from "@/components/AdSpace";
+import Navbar from "@/components/Navbar";
+import { cookies } from "next/headers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,73 +27,28 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const uid = cookieStore.get('lr_uid')?.value || null;
+  const role = cookieStore.get('lr_role')?.value || null;
+  const name = cookieStore.get('lr_name')?.value || null;
+
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col" style={{ background: "var(--background)", color: "var(--foreground)", fontFamily: "var(--font-sans)" }}>
 
         {/* ── Navigation Header ─────────────────────────────────────────────
-            Public nav only shows Events, Login, and Sign Up.
-            Admin / Gate / Timer / Judge links are accessed directly by URL.
-            Staff access their pages at /admin, /gate, /timer, /judge.
+            Dynamic Navbar renders depending on login/role status.
         */}
         <header
           className="bg-slate-900 text-white sticky top-0 z-50 nav-gradient-border"
           style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.4)" }}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-
-            {/* Logo */}
-            <Link
-              href="/"
-              className="font-black text-xl tracking-tight flex items-center gap-2.5 group"
-              aria-label="LiveRide – Home"
-            >
-              <span
-                className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm text-white transition-all duration-200 group-hover:scale-110"
-                style={{ background: "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)" }}
-              >
-                LR
-              </span>
-              <span>
-                Live<span className="text-blue-400">Ride</span>
-              </span>
-            </Link>
-
-            {/* Public nav — Events + Auth only */}
-            <nav className="flex items-center gap-1" role="navigation" aria-label="Main navigation">
-              <Link
-                href="/"
-                id="nav-events"
-                className="px-3 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all duration-150"
-              >
-                Events
-              </Link>
-
-              {/* Auth links */}
-              <div className="ml-2 flex items-center gap-1.5 border-l border-slate-700 pl-3">
-                <Link
-                  href="/login"
-                  id="nav-login"
-                  className="px-3 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all duration-150"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/signup"
-                  id="nav-signup"
-                  className="px-3.5 py-1.5 rounded-lg text-sm font-bold text-white transition-all duration-150"
-                  style={{ background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)' }}
-                >
-                  Sign up
-                </Link>
-              </div>
-            </nav>
-          </div>
+          <Navbar initialUid={uid} initialRole={role} initialName={name} />
         </header>
 
         {/* ── Main Content ────────────────────────────────────────────────── */}

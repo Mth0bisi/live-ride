@@ -62,10 +62,10 @@ export default function AdSpace({
           rel="noopener noreferrer sponsored"
           className="block hover:opacity-90 transition-opacity duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
           aria-label={`Advertisement: ${WS_ALT}`}
-          id="ad-western-shoppe-square"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            id="ad-western-shoppe-square"
             src="/sponsors/western-shoppe-square.png"
             alt={WS_ALT}
             style={{ width: '100%', height: 'auto', display: 'block' }}
@@ -93,10 +93,10 @@ export default function AdSpace({
         rel="noopener noreferrer sponsored"
         className="flex items-center justify-center w-full hover:opacity-90 transition-opacity duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 py-3 px-6"
         aria-label={`Advertisement: ${WS_ALT}`}
-        id="ad-western-shoppe-banner"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          id="ad-western-shoppe-banner"
           src="/sponsors/western-shoppe-banner.png"
           alt={WS_ALT}
           style={{
