@@ -1,58 +1,33 @@
 /**
- * AdSpace — sponsor advertisement banner component.
+ * AdSpace — Western Shoppe sponsor advertisement component.
  *
- * Sponsor: Western Shoppe (Traders in Fine Saddlery and Equestrian Supplies)
+ * Placements:
+ *   'banner' → full-width horizontal strip (top + bottom of pages)
+ *              Image: /sponsors/western-shoppe-banner.png
+ *              Sizing: full width, height auto (image fills naturally), max-height 120px
  *
- * Placement types:
- *   'banner'  → top & bottom leaderboard areas — uses western-shoppe-banner.png
- *   'square'  → right sidebar compact slot    — uses western-shoppe-square.png
- *   'legacy'  → legacy leaderboard slot       — falls back to banner image
+ *   'square' → compact sidebar slot (right column)
+ *              Image: /sponsors/western-shoppe-square.png
+ *              Sizing: fixed square, 200×200px max
+ *
+ * Backwards-compat: legacy `size` prop ('leaderboard' → 'banner', 'sidebar' → 'square')
  */
 
 type AdPlacement = 'banner' | 'square' | 'legacy';
 
 interface AdSpaceProps {
-  /** Which slot this ad fills. Defaults to 'banner'. */
   placement?: AdPlacement;
-  /** Override the destination URL */
   href?: string;
   className?: string;
-  /**
-   * @deprecated Use placement instead.
-   * Legacy prop kept for backwards-compat — 'leaderboard'/'sidebar'/'banner'
-   * are mapped to the new placement values automatically.
-   */
+  /** @deprecated Use placement instead */
   size?: 'leaderboard' | 'sidebar' | 'banner';
-  /** @deprecated Single sponsor — this prop is ignored but kept for compat. */
+  /** @deprecated Single sponsor — prop ignored, kept for compat */
   sponsor?: string;
 }
 
 const WS_HREF = 'https://www.westernshoppe.co.za';
 const WS_ALT  = 'Western Shoppe – Traders in Fine Saddlery and Equestrian Supplies';
 
-/** Resolve the correct image path and dimensions for each placement. */
-function getConfig(placement: AdPlacement) {
-  switch (placement) {
-    case 'square':
-      return {
-        src:             '/sponsors/western-shoppe-square.png',
-        containerStyle:  { width: '100%', maxWidth: '300px', aspectRatio: '1 / 1' },
-        imgStyle:        { width: '100%', height: '100%', objectFit: 'contain' as const },
-        containerClass:  'overflow-hidden rounded-xl border border-slate-200/60 shadow-md',
-      };
-    case 'banner':
-    case 'legacy':
-    default:
-      return {
-        src:            '/sponsors/western-shoppe-banner.png',
-        containerStyle: { width: '100%', maxHeight: '90px' },
-        imgStyle:       { width: '100%', height: '90px', objectFit: 'contain' as const },
-        containerClass: 'w-full overflow-hidden rounded-xl border border-slate-100 shadow-sm bg-white',
-      };
-  }
-}
-
-/** Map the legacy `size` prop to the new placement system. */
 function resolvePlacement(
   placement: AdPlacement | undefined,
   size: AdSpaceProps['size'] | undefined,
@@ -68,52 +43,95 @@ export default function AdSpace({
   href,
   className = '',
 }: AdSpaceProps) {
-  const resolved = resolvePlacement(placement, size);
-  const cfg      = getConfig(resolved);
+  const resolved  = resolvePlacement(placement, size);
   const finalHref = href ?? WS_HREF;
 
+  if (resolved === 'square') {
+    // ── Square sidebar slot ───────────────────────────────────────────────
+    return (
+      <div
+        className={`relative overflow-hidden rounded-xl border border-slate-200/60 shadow-md bg-white ${className}`}
+        style={{ width: '100%', maxWidth: '260px' }}
+        role="complementary"
+        aria-label="Sponsored by Western Shoppe"
+      >
+        <SponsoredLabel />
+        <a
+          href={finalHref}
+          target="_blank"
+          rel="noopener noreferrer sponsored"
+          className="block hover:opacity-90 transition-opacity duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+          aria-label={`Advertisement: ${WS_ALT}`}
+          id="ad-western-shoppe-square"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sponsors/western-shoppe-square.png"
+            alt={WS_ALT}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+            loading="lazy"
+          />
+        </a>
+      </div>
+    );
+  }
+
+  // ── Banner / leaderboard slot ─────────────────────────────────────────────
+  // Use full-width natural image sizing so the logo always fills the container
+  // width regardless of image intrinsic dimensions.
   return (
     <div
-      className={`ad-space-wrapper group relative ${cfg.containerClass} ${className}`}
-      style={cfg.containerStyle}
+      className={`relative overflow-hidden rounded-xl border border-slate-100 shadow-sm bg-white ${className}`}
+      style={{ width: '100%' }}
       role="complementary"
       aria-label="Sponsored by Western Shoppe"
     >
-      {/* Sponsored micro-label */}
-      <div className="absolute top-1 left-2 z-10 pointer-events-none">
-        <span
-          style={{
-            fontSize: '9px',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            background: 'rgba(0,0,0,0.35)',
-            color: 'rgba(255,255,255,0.80)',
-            padding: '1px 5px',
-            borderRadius: '3px',
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          Sponsored
-        </span>
-      </div>
-
+      <SponsoredLabel />
       <a
         href={finalHref}
         target="_blank"
         rel="noopener noreferrer sponsored"
-        className="block w-full h-full transition-opacity duration-200 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+        className="flex items-center justify-center w-full hover:opacity-90 transition-opacity duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 py-3 px-6"
         aria-label={`Advertisement: ${WS_ALT}`}
-        id={`ad-western-shoppe-${resolved}`}
+        id="ad-western-shoppe-banner"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={cfg.src}
+          src="/sponsors/western-shoppe-banner.png"
           alt={WS_ALT}
-          style={cfg.imgStyle}
+          style={{
+            width:     '100%',
+            maxWidth:  '800px',
+            height:    'auto',
+            maxHeight: '100px',
+            objectFit: 'contain',
+            display:   'block',
+          }}
           loading="lazy"
         />
       </a>
+    </div>
+  );
+}
+
+function SponsoredLabel() {
+  return (
+    <div className="absolute top-1 left-2 z-10 pointer-events-none">
+      <span
+        style={{
+          fontSize:        '9px',
+          fontWeight:      700,
+          textTransform:   'uppercase',
+          letterSpacing:   '0.08em',
+          background:      'rgba(0,0,0,0.25)',
+          color:           'rgba(255,255,255,0.85)',
+          padding:         '1px 5px',
+          borderRadius:    '3px',
+          backdropFilter:  'blur(4px)',
+        }}
+      >
+        Sponsored
+      </span>
     </div>
   );
 }

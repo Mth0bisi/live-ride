@@ -131,15 +131,6 @@ export default function RootLayout({
               <Link href="/unauthorized" className="hover:text-white transition-colors text-slate-600">Access Help</Link>
             </nav>
 
-            {/* Sponsor credit */}
-            <div className="flex items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/sponsors/western-shoppe-banner.png"
-                alt="Western Shoppe"
-                className="h-6 object-contain opacity-60"
-              />
-            </div>
 
             {/* Copyright */}
             <p className="text-xs text-slate-600">
