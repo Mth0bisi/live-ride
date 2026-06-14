@@ -68,8 +68,8 @@ export default async function Home() {
         )}
       </div>
 
-      {/* ── Toyota Leaderboard Ad ─────────────────────────────────────────── */}
-      <AdSpace sponsor="toyota" size="leaderboard" />
+      {/* ── Western Shoppe Leaderboard Ad ──────────────────────────────────── */}
+      <AdSpace sponsor="western-shoppe" size="leaderboard" />
 
       {/* ── Live Events ──────────────────────────────────────────────────── */}
       <section className="space-y-5">

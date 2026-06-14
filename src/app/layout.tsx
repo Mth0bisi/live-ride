@@ -74,6 +74,25 @@ export default function RootLayout({
                   {label}
                 </Link>
               ))}
+
+              {/* Auth links */}
+              <div className="ml-2 flex items-center gap-1.5 border-l border-slate-700 pl-3">
+                <Link
+                  href="/login"
+                  id="nav-login"
+                  className="px-3 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all duration-150"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/signup"
+                  id="nav-signup"
+                  className="px-3.5 py-1.5 rounded-lg text-sm font-bold text-white transition-all duration-150"
+                  style={{ background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)' }}
+                >
+                  Sign up
+                </Link>
+              </div>
             </nav>
           </div>
         </header>
@@ -86,9 +105,9 @@ export default function RootLayout({
         {/* ── Footer ───────────────────────────────────────────────────── */}
         <footer className="bg-slate-900 text-slate-400 mt-12">
 
-          {/* Toyota leaderboard footer ad */}
+          {/* Western Shoppe leaderboard footer ad */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-            <AdSpace sponsor="toyota" size="leaderboard" />
+            <AdSpace sponsor="western-shoppe" size="leaderboard" />
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -113,6 +132,8 @@ export default function RootLayout({
               <Link href="/admin" className="hover:text-white transition-colors">Admin</Link>
               <Link href="/gate" className="hover:text-white transition-colors">Gate Marshal</Link>
               <Link href="/timer" className="hover:text-white transition-colors">Timer</Link>
+              <Link href="/login" className="hover:text-white transition-colors">Login</Link>
+              <Link href="/signup" className="hover:text-white transition-colors">Sign up</Link>
             </nav>
 
             {/* Copyright */}

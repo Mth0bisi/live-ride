@@ -1,10 +1,15 @@
 import Image from 'next/image';
 
-type Sponsor = 'toyota' | 'western-shoppe';
+/**
+ * AdSpace component — displays a sponsor advertisement banner.
+ * Toyota has been removed. Western Shoppe is now the primary platform sponsor.
+ */
+
+type Sponsor = 'western-shoppe';
 type AdSize = 'leaderboard' | 'sidebar' | 'banner';
 
 interface AdSpaceProps {
-  sponsor: Sponsor;
+  sponsor?: Sponsor;
   size: AdSize;
   href?: string;
   className?: string;
@@ -14,11 +19,6 @@ const AD_CONFIG: Record<
   Sponsor,
   { href: string; alt: string; label: string }
 > = {
-  toyota: {
-    href: 'https://www.toyota.co.za',
-    alt: "Toyota – Official Vehicle Partner – Let's Go Places",
-    label: 'Toyota',
-  },
   'western-shoppe': {
     href: 'https://www.westernshoppe.co.za',
     alt: 'Western Shoppe – Gear Up. Ride On. Premium Equestrian Clothing & Gear',
@@ -26,7 +26,7 @@ const AD_CONFIG: Record<
   },
 };
 
-/** Pixel height for each ad slot — constrains the container so the image crops to fit */
+/** Pixel height for each ad slot */
 const SIZE_HEIGHT: Record<AdSize, number> = {
   leaderboard: 350,
   sidebar:     260,
@@ -40,28 +40,25 @@ const SIZE_CONFIG: Record<
   leaderboard: {
     containerClass: 'w-full overflow-hidden rounded-xl border border-slate-200/60 shadow-sm',
     imgSrc: {
-      toyota: '/ad-toyota-leaderboard.png',
       'western-shoppe': '/ad-western-shoppe-sidebar.png',
     },
   },
   sidebar: {
     containerClass: 'w-full max-w-[300px] overflow-hidden rounded-xl border border-slate-200/60 shadow-md',
     imgSrc: {
-      toyota: '/ad-toyota-leaderboard.png',
       'western-shoppe': '/ad-western-shoppe-sidebar.png',
     },
   },
   banner: {
     containerClass: 'w-full overflow-hidden rounded-lg border border-slate-200/60 shadow-sm',
     imgSrc: {
-      toyota: '/ad-toyota-leaderboard.png',
       'western-shoppe': '/ad-western-shoppe-sidebar.png',
     },
   },
 };
 
 export default function AdSpace({
-  sponsor,
+  sponsor = 'western-shoppe',
   size,
   href,
   className = '',
