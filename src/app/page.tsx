@@ -300,8 +300,6 @@ export default async function Home() {
         </section>
       )}
 
-      {/* ── Western Shoppe Bottom Banner Ad ─────────────────────────────────── */}
-      <AdSpace placement="banner" />
     </div>
   );
 }

@@ -1,9 +1,14 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginForm() {
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo     = searchParams.get('return') ?? null;
+
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
@@ -12,16 +17,43 @@ export default function LoginPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
-    if (!email || !password) {
-      setError('Please enter your email and password.');
-      return;
-    }
+
+    if (!email.trim()) { setError('Please enter your email address.'); return; }
+    if (!password)      { setError('Please enter your password.'); return; }
+
     setLoading(true);
-    // TODO: Integrate real auth provider (NextAuth / Supabase / Clerk)
-    // Simulate async call
-    await new Promise(r => setTimeout(r, 800));
-    setError('Authentication not yet configured. Please check back soon.');
-    setLoading(false);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: email.trim(), password }),
+      });
+
+      const data = await res.json() as {
+        error?: string;
+        user?: { role: string; name: string };
+        redirectTo?: string;
+      };
+
+      if (!res.ok || data.error) {
+        setError(data.error ?? 'Login failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Store role in localStorage for client-side session helper
+      if (data.user?.role) {
+        localStorage.setItem('lr_role', data.user.role);
+        localStorage.setItem('lr_name', data.user.name ?? '');
+      }
+
+      // Redirect: honour the ?return= param first, then role default
+      const target = returnTo ?? data.redirectTo ?? '/';
+      router.push(target);
+    } catch {
+      setError('Network error. Please check your connection and try again.');
+      setLoading(false);
+    }
   }
 
   return (
@@ -33,12 +65,11 @@ export default function LoginPage() {
           className="bg-white rounded-2xl border border-slate-200 overflow-hidden"
           style={{ boxShadow: 'var(--shadow-elevated)' }}
         >
-          {/* Card header strip */}
+          {/* Card header */}
           <div
             className="px-8 pt-8 pb-6 border-b border-slate-100"
             style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}
           >
-            {/* Logo mark */}
             <div className="flex items-center gap-2.5 mb-5">
               <span
                 className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm text-white"
@@ -50,7 +81,6 @@ export default function LoginPage() {
                 Live<span className="text-blue-500">Ride</span>
               </span>
             </div>
-
             <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">
               Welcome back
             </h1>
@@ -73,6 +103,13 @@ export default function LoginPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {error}
+              </div>
+            )}
+
+            {/* ReturnTo context hint */}
+            {returnTo && !error && (
+              <div className="text-xs text-slate-500 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 font-medium">
+                🔒 &nbsp;Sign in to continue to your requested page.
               </div>
             )}
 
@@ -132,15 +169,8 @@ export default function LoginPage() {
                   </svg>
                   Signing in…
                 </span>
-              ) : (
-                'Sign in'
-              )}
+              ) : 'Sign in'}
             </button>
-
-            {/* Demo note */}
-            <div className="text-center text-xs text-slate-400 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 font-medium leading-relaxed">
-              🐎 &nbsp;<strong className="text-amber-700">Demo mode active.</strong> This platform uses live demo data from Neon PostgreSQL. Full auth coming soon.
-            </div>
 
             {/* Signup link */}
             <p className="text-center text-sm text-slate-500 font-medium">
@@ -161,13 +191,25 @@ export default function LoginPage() {
           <p className="text-xs text-slate-400 font-medium mb-2">Proudly supported by</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/sponsors/western-shoppe-logo.png"
+            src="/sponsors/western-shoppe-banner.png"
             alt="Western Shoppe"
-            className="h-7 mx-auto opacity-60 object-contain"
+            className="h-8 mx-auto object-contain opacity-70"
             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
