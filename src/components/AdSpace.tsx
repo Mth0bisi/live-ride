@@ -50,7 +50,7 @@ export default function AdSpace({
     // ── Square sidebar slot ───────────────────────────────────────────────
     return (
       <div
-        className={`relative overflow-hidden rounded-xl border border-slate-200/60 shadow-md bg-white ${className}`}
+        className={`relative overflow-hidden rounded-xl border border-slate-200/60 shadow-md bg-white mx-auto ${className}`}
         style={{ width: '100%', maxWidth: '260px' }}
         role="complementary"
         aria-label="Sponsored by Western Shoppe"
