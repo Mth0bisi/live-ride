@@ -1,0 +1,18 @@
+User-agent: *
+
+# Public event portal — allow indexing
+Allow: /
+Allow: /event/
+Allow: /login
+Allow: /signup
+
+# Staff dashboards — not for public indexing
+Disallow: /admin
+Disallow: /gate
+Disallow: /timer
+Disallow: /judge
+Disallow: /profile
+Disallow: /unauthorized
+
+# Internal API — not for indexing
+Disallow: /api/

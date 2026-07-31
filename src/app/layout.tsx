@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import AdSpace from "@/components/AdSpace";
 import Navbar from "@/components/Navbar";
 import { cookies } from "next/headers";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -38,7 +31,7 @@ export default async function RootLayout({
   const name = cookieStore.get('lr_name')?.value || null;
 
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full flex flex-col" style={{ background: "var(--background)", color: "var(--foreground)", fontFamily: "var(--font-sans)" }}>
 
         {/* ── Navigation Header ─────────────────────────────────────────────
@@ -80,12 +73,25 @@ export default async function RootLayout({
               </div>
             </div>
 
-            {/* Public footer nav — no internal staff links */}
+            {/* Auth-aware footer nav */}
             <nav className="flex flex-wrap gap-4 text-xs font-semibold" aria-label="Footer navigation">
               <Link href="/" className="hover:text-white transition-colors">Events</Link>
-              <Link href="/login" className="hover:text-white transition-colors">Login</Link>
-              <Link href="/signup" className="hover:text-white transition-colors">Sign up</Link>
-              <Link href="/unauthorized" className="hover:text-white transition-colors text-slate-600">Access Help</Link>
+              {uid ? (
+                <>
+                  <Link href="/profile" className="hover:text-white transition-colors">My Profile</Link>
+                  <form action="/api/auth/logout" method="POST">
+                    <button type="submit" className="hover:text-white transition-colors cursor-pointer">
+                      Logout
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Link href="/login"  className="hover:text-white transition-colors">Login</Link>
+                  <Link href="/signup" className="hover:text-white transition-colors">Sign up</Link>
+                  <Link href="/unauthorized" className="hover:text-white transition-colors text-slate-600">Access Help</Link>
+                </>
+              )}
             </nav>
 
 

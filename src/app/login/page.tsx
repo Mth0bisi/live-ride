@@ -2,10 +2,9 @@
 
 import { useState, FormEvent, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 function LoginForm() {
-  const router       = useRouter();
   const searchParams = useSearchParams();
   const returnTo     = searchParams.get('return') ?? null;
 
@@ -47,9 +46,10 @@ function LoginForm() {
         localStorage.setItem('lr_name', data.user.name ?? '');
       }
 
-      // Redirect: honour the ?return= param first, then role default
+      // Full page reload so the SSR layout reads the new httpOnly session cookies
+      // and the Navbar hydrates with the correct auth state.
       const target = returnTo ?? data.redirectTo ?? '/';
-      router.push(target);
+      window.location.href = target;
     } catch {
       setError('Network error. Please check your connection and try again.');
       setLoading(false);

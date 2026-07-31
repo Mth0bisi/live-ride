@@ -1,19 +1,17 @@
 /**
- * session.ts — Placeholder session / role helper for LiveRide.
+ * session.ts — Session / role helpers for LiveRide.
  *
- * This is a STUB implementation.
- * TODO: Replace with a real auth provider (NextAuth, Supabase Auth, Clerk, etc.)
- * when auth infrastructure is ready.
+ * Server-side: reads the `lr_role` and `lr_uid` cookies set at login.
+ * Client-side: reads `localStorage` mirrors (set at login for legacy helpers).
  *
- * Current behaviour:
- * - Server-side: reads the `lr_role` cookie (set at login)
- * - Client-side: reads `localStorage.getItem('lr_role')` (set at login)
- * - Falls back to null (unauthenticated) if no cookie/storage value found
+ * Primary route protection is enforced in src/middleware.ts.
+ * `requireServerRole` acts as a second safety net inside server components.
  *
  * Role values: VIEWER | GATE_MARSHAL | TIMER | JUDGE | ORGANISER | ADMIN
  */
 
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import type { Role } from '@/lib/auth';
 
 export type SessionRole = Role | 'ADMIN' | 'TIMER' | null;
@@ -80,17 +78,15 @@ export function roleCanAccess(role: SessionRole, pathname: string): boolean {
 }
 
 /**
- * Server action helper — returns the role or redirects to /unauthorized.
- * TODO: Wire in real redirect when Next.js `redirect()` is appropriate here.
+ * Server component helper — verifies the session role and redirects if not allowed.
+ * Throws a Next.js redirect (never returns null for an unauthorised caller).
  */
 export async function requireServerRole(
   allowedRoles: SessionRole[],
 ): Promise<SessionRole> {
   const role = await getServerSessionRole();
   if (role === null || !allowedRoles.includes(role)) {
-    // TODO: uncomment once real auth is in place:
-    // redirect('/unauthorized');
-    return null;
+    redirect('/unauthorized');
   }
   return role;
 }
@@ -100,7 +96,6 @@ export async function requireServerRole(
 /**
  * Read the role from localStorage (client component safe).
  * Returns null if not in browser context.
- * TODO: Replace with real token validation.
  */
 export function getClientSessionRole(): SessionRole {
   if (typeof window === 'undefined') return null;
@@ -113,8 +108,7 @@ export function getClientSessionRole(): SessionRole {
 }
 
 /**
- * Set the session role in localStorage (called at login).
- * TODO: Replace with real session cookie write.
+ * Mirror the session role in localStorage (called at login for client helpers).
  */
 export function setClientSessionRole(role: SessionRole): void {
   if (typeof window === 'undefined') return;

@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/auth/login
@@ -10,13 +11,13 @@ import { cookies } from 'next/headers';
  *
  * Returns:
  *   200 { user: { id, name, email, role, viewerPackage }, redirectTo: string }
- *   401 { error: string }
  *   400 { error: string }
+ *   401 { error: string }
+ *   429 { error: string; retryAfterSeconds: number }
  *   500 { error: string }
  *
- * Sets httpOnly cookie: lr_role (role value), lr_uid (user id)
- *
- * TODO: Replace with full NextAuth / Supabase / Clerk session when ready.
+ * Sets httpOnly cookies: lr_role, lr_uid, lr_name (7-day expiry).
+ * Rate limited: 10 attempts per IP per 60 seconds.
  */
 
 const ROLE_REDIRECT: Record<string, string> = {
@@ -28,7 +29,28 @@ const ROLE_REDIRECT: Record<string, string> = {
   VIEWER:       '/',
 };
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // ── Rate limiting ────────────────────────────────────────────────────────────
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    request.headers.get('x-real-ip') ??
+    null;
+
+  const rateLimit = checkRateLimit(ip);
+  if (rateLimit.limited) {
+    return NextResponse.json(
+      {
+        error: `Too many login attempts. Please try again in ${rateLimit.retryAfterSeconds} second${rateLimit.retryAfterSeconds === 1 ? '' : 's'}.`,
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) },
+      },
+    );
+  }
+
+  // ── Request body ─────────────────────────────────────────────────────────────
   try {
     const body = await request.json() as { email?: string; password?: string };
     const { email, password } = body;
@@ -40,7 +62,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Lookup user
+    // ── DB lookup ─────────────────────────────────────────────────────────────
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
       select: {
@@ -55,14 +77,14 @@ export async function POST(request: Request) {
     });
 
     if (!user || !user.passwordHash) {
-      // Generic error to prevent email enumeration
+      // Generic error — prevents email enumeration
       return NextResponse.json(
         { error: 'Incorrect email or password.' },
         { status: 401 },
       );
     }
 
-    // Verify password
+    // ── Password verification ─────────────────────────────────────────────────
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       return NextResponse.json(
@@ -71,22 +93,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // Set session cookies (httpOnly, SameSite=Lax)
+    // ── Set session cookies (httpOnly, SameSite=Lax) ──────────────────────────
     const cookieStore = await cookies();
     const cookieOpts = {
-      httpOnly:  true,
-      sameSite:  'lax' as const,
-      path:      '/',
-      maxAge:    60 * 60 * 24 * 7, // 7 days
-      secure:    process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax' as const,
+      path:     '/',
+      maxAge:   60 * 60 * 24 * 7, // 7 days
+      secure:   process.env.NODE_ENV === 'production',
     };
 
-    cookieStore.set('lr_role', user.role,  cookieOpts);
-    cookieStore.set('lr_uid',  user.id,    cookieOpts);
-    cookieStore.set('lr_name', user.name,  cookieOpts);
+    cookieStore.set('lr_role', user.role, cookieOpts);
+    cookieStore.set('lr_uid',  user.id,   cookieOpts);
+    cookieStore.set('lr_name', user.name, cookieOpts);
 
-    // Determine redirect target
-    const returnTo   = undefined; // Caller passes returnTo via query string
     const defaultPath = ROLE_REDIRECT[user.role] ?? '/';
 
     return NextResponse.json({
@@ -98,7 +118,7 @@ export async function POST(request: Request) {
         viewerPackage:      user.viewerPackage,
         subscriptionStatus: user.subscriptionStatus,
       },
-      redirectTo: returnTo ?? defaultPath,
+      redirectTo: defaultPath,
     });
   } catch (err) {
     console.error('POST /api/auth/login error:', err);
