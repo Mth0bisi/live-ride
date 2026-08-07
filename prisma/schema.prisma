@@ -2,12 +2,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Datasource — PostgreSQL for production (Neon via Vercel).
-// Local development: create .env.local (gitignored) with your Neon dev branch URL.
+// Datasource — PostgreSQL (Neon). Runtime uses the pooler URL.
+// For local migrations use DB_DIRECT_URL via .env.local (see .env.local.example).
 datasource db {
-  provider  = "postgresql"
-  url       = env("DB_DATABASE_URL")
-  directUrl = env("DB_DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DB_DATABASE_URL")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
